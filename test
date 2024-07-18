@@ -1,0 +1,32 @@
+package ussum.homepage.application.reaction.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import ussum.homepage.application.reaction.service.dto.request.CreatePostReactionReq;
+import ussum.homepage.domain.postlike.PostReaction;
+import ussum.homepage.domain.postlike.exception.PostReactionException;
+import ussum.homepage.domain.postlike.service.PostReactionAppender;
+import ussum.homepage.domain.postlike.service.PostReactionReader;
+
+
+import java.util.Optional;
+
+import static ussum.homepage.global.error.status.ErrorStatus.POST_REACTION_NOT_FOUND;
+
+@Service
+@RequiredArgsConstructor
+public class PostReactionService {
+
+    private final PostReactionAppender postReactionAppender;
+    private final PostReactionReader postReactionReader;
+
+    public void createPostReaction(Long userId, Long postId, CreatePostReactionReq createPostReactionReq){
+        Optional<PostReaction> postReaction = postReactionReader.getPostReactionByUserIdAndPostId(userId,postId);
+        if(postReaction.isEmpty()){
+            postReactionAppender.createPostReaction(createPostReactionReq.toDomain(postId, userId));
+        } else if(!postReaction.get().getReaction().equals(createPostReactionReq.reaction())) {
+            postReactionAppender.createPostReaction(createPostReactionReq.toDomain(postId, userId));
+        } else
+            throw new PostReactionException(POST_REACTION_NOT_FOUND);
+    }
+}
